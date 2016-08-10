@@ -3,10 +3,10 @@
 require 'connect.php';
 require 'function.php';
 
-define("ARM_DB_HTML",      "testdata/new/armor.html");            // 運用時 //figureheads.jp/database/index.php
-define("ARM_PREV_JSON",    "testdata/old/prev_armor_data.json");  // 運用時 prevdata/prev_armor_data.json
-define("WEAPON_DB_HTML",   "testdata/new/weapon.html");           // 運用時 //figureheads.jp/database/weapon.php
-define("WEAPON_PREV_JSON", "testdata/old/prev_weapon_data.json"); // 運用時 prevdata/prev_weapon_data.json
+define("ARM_DB_HTML",      "http://figureheads.jp/database/index.php");            // 運用時 figureheads.jp/database/index.php
+define("ARM_PREV_JSON",    "prevdata/prev_armor_data.json");                 // 運用時 prevdata/prev_armor_data.json
+define("WEAPON_DB_HTML",   "http://figureheads.jp/database/weapon.php ");           // 運用時 figureheads.jp/database/weapon.php
+define("WEAPON_PREV_JSON", "prevdata/prev_weapon_data.json ");               // 運用時 prevdata/prev_weapon_data.json
 
 
 // 新しい装甲 JSON を読み込む
@@ -32,7 +32,15 @@ $diff_weapon = diffUpdateWeapon( $new_weapon_data, $prev_weapon_data );
 tweetUpdateArmor( $diff_armor );
 tweetUpdateWeapon( $diff_weapon );
 
+if ( isset($diff_armor) || isset($diff_weapon) ) {
+     echo '<pre>';
+     print_r($diff_armor);
+     print_r($diff_weapon);
+     echo '</pre>';
+} else {
+    echo '変更はありません';
+}
 
 // JSON を更新する
-// file_put_contents('testdata/old/prev_armor_data.json', $new_armor_json);
-// file_put_contents('testdata/old/prev_weapon_data.json', $new_weapon_json);
+file_put_contents('testdata/old/prev_armor_data.json', $new_armor_json);
+file_put_contents('testdata/old/prev_weapon_data.json', $new_weapon_json);
