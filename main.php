@@ -32,14 +32,7 @@ $diff_weapon = diffUpdateWeapon( $new_weapon_data, $prev_weapon_data );
 tweetUpdateArmor( $diff_armor );
 tweetUpdateWeapon( $diff_weapon );
 
-if ( isset($diff_armor) || isset($diff_weapon) ) {
-     echo '<pre>';
-     print_r($diff_armor);
-     print_r($diff_weapon);
-     echo '</pre>';
-} else {
-    echo '変更はありません';
-}
+print_r( $diff_armor );
 
 // JSON を更新する
 file_put_contents('testdata/old/prev_armor_data.json', $new_armor_json);
