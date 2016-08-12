@@ -1,14 +1,26 @@
-<?
+<?php
 
-require 'connect.php';
+// require 'connect.php';
 require 'function.php';
 
-define("ARM_DB_HTML",      "http://figureheads.jp/database/index.php");   // 運用時 figureheads.jp/database/index.php
-define("ARM_PREV_JSON",    "prevdata/prev_armor_data.json");              // 運用時 prevdata/prev_armor_data.json
-define("WEAPON_DB_HTML",   "http://figureheads.jp/database/weapon.php "); // 運用時 figureheads.jp/database/weapon.php
-define("WEAPON_PREV_JSON", "prevdata/prev_weapon_data.json ");            // 運用時 prevdata/prev_weapon_data.json
+define("NEW_ARMOR_DB",     "testdata/new/armor.html"); // http://figureheads.jp/database/index.php
+define("PREV_ARMOR_JSON",  "prevdata/prev_armor_data.json");
+define("NEW_WEAPON_DB",    "http://figureheads.jp/database/weapon.php");
+define("PREV_WEAPON_JSON", "prevdata/prev_weapon_data.json");
+
+$new_armor_data  = get_new_armor_params( NEW_ARMOR_DB ); // 新しい装甲パラメーターオブジェクトを取得する
+$prev_armor_data = get_prev_params( PREV_ARMOR_JSON ); // 古い装甲のパラメーターオブジェクトを取得する
+
+echo '<pre>';
+print_r( diffUpdateArmor( $new_armor_data, $prev_armor_data ) );
+echo '</pre>';
 
 
+// json を更新する
+// update_prev_json( 'armor', $new_armor_data );
+// update_prev_json( 'weapon', $new_weapon_data );
+
+/*
 // 新しい装甲 JSON を読み込む
 $new_armor_json = getNewJSON( ARM_DB_HTML );
 $new_armor_data = json_decode( $new_armor_json );

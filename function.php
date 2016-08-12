@@ -1,31 +1,66 @@
 <?
 /**
- * パーツDBからJSONを抽出する
- * 抽出に成功したらJSONを返す
- * 
- * @param  [string] $url       [データベースのURL]
- * @param  [string] $star_word [description]
- * @param  [string] $end_word  [description]
- * @return [string]            [description]
+ * アプデ前のパラメーターオブジェクトを返す
+ * @param  [string] $path アプデ前のJSONへのパス
+ * @return [obj]    　　　 古いパラメーターオブジェクトを返す
  */
-function getNewJSON( $url, $start_word= 'InitCardData', $end_word= '}}' ) {
-	$html= file_get_contents( $url );	
-	$start= strpos( $html, $start_word );
-	$end= strpos( $html, $end_word, $start);
-	$length = $end + strlen($end_word) - $start;
-	$json = substr( $html, $start, $length );
-	$json = strstr( $json, '{');
-
-	return $json;
+function get_prev_params( $path ) {
+	return json_decode( file_get_contents($path) );
 }
 
 /**
- * 古いJSONを返す
- * @param  string $url [description]
- * @return [sring]     [description]
+ * 装甲DBをスクレイピングし装甲オブジェクトを返す
+ * @param  [string] $url パーツDBのURL
+ * @return [obj] 装甲のパラメータのオブジェクトを返す
  */
-function getPrevJSON( $url ) {
-	return file_get_contents( $url );
+function get_new_armor_params( $url ) {
+
+	$dom = new DOMDocument;
+	@$dom->loadHTMLFile( $url );
+	$xpath = new DOMXPath( $dom );
+
+	$xpath_query = 'body/div[@id="wp"]/div[@id="contents"]/div[@id="card_list_layer"]/div[@id="card_list_wrapper"]/ul[@id="cardlist"]//li';
+	$node = $xpath->query($xpath_query);
+	$parts = [];
+	foreach ($node as $li) {
+		
+		$rob_id = $xpath->evaluate('string(./a/@data-card-id)', $li);
+
+		$class = $xpath->evaluate('string(./@class)', $li);
+		$parts[$rob_id]->update = preg_match( '/["\s]update/', $class ) ? 'y' : 'n';
+
+		$parts[$rob_id]->name = $xpath->evaluate('string(./a/@data-card-name)', $li);
+		
+		$parts[$rob_id]->head->armor->min = $xpath->evaluate('string(./@data-headminarmor)', $li);
+		$parts[$rob_id]->head->armor->max = $xpath->evaluate('string(./@data-headmaxarmor)', $li);
+		$parts[$rob_id]->head->heat->min = $xpath->evaluate('string(./@data-headminheat)', $li);
+		$parts[$rob_id]->head->heat->max = $xpath->evaluate('string(./@data-headmaxheat)', $li);
+		$parts[$rob_id]->head->weight->min = $xpath->evaluate('string(./@data-headminweight)', $li);
+		$parts[$rob_id]->head->weight->max = $xpath->evaluate('string(./@data-headmaxweight)', $li);
+
+		$parts[$rob_id]->body->armor->min = $xpath->evaluate('string(./@data-bodyminarmor)', $li);
+		$parts[$rob_id]->body->armor->max = $xpath->evaluate('string(./@data-bodymaxarmor)', $li);
+		$parts[$rob_id]->body->heat->min = $xpath->evaluate('string(./@data-bodyminheat)', $li);
+		$parts[$rob_id]->body->heat->max = $xpath->evaluate('string(./@data-bodymaxheat)', $li);
+		$parts[$rob_id]->body->weight->min = $xpath->evaluate('string(./@data-bodyminweight)', $li);
+		$parts[$rob_id]->body->weight->max = $xpath->evaluate('string(./@data-bodymaxweight)', $li);
+	
+		$parts[$rob_id]->arm->armor->min = $xpath->evaluate('string(./@data-armminarmor)', $li);
+		$parts[$rob_id]->arm->armor->max = $xpath->evaluate('string(./@data-armmaxarmor)', $li);
+		$parts[$rob_id]->arm->heat->min = $xpath->evaluate('string(./@data-armminheat)', $li);
+		$parts[$rob_id]->arm->heat->max = $xpath->evaluate('string(./@data-armmaxheat)', $li);
+		$parts[$rob_id]->arm->weight->min = $xpath->evaluate('string(./@data-armminweight)', $li);
+		$parts[$rob_id]->arm->weight->max = $xpath->evaluate('string(./@data-armmaxweight)', $li);
+		
+		$parts[$rob_id]->leg->armor->min = $xpath->evaluate('string(./@data-legminarmor)', $li);
+		$parts[$rob_id]->leg->armor->max = $xpath->evaluate('string(./@data-legmaxarmor)', $li);
+		$parts[$rob_id]->leg->heat->min = $xpath->evaluate('string(./@data-legminheat)', $li);
+		$parts[$rob_id]->leg->heat->max = $xpath->evaluate('string(./@data-legmaxheat)', $li);
+		$parts[$rob_id]->leg->weight->min = $xpath->evaluate('string(./@data-legminweight)', $li);
+		$parts[$rob_id]->leg->weight->max = $xpath->evaluate('string(./@data-legmaxweight)', $li);
+	}
+
+	return $parts;
 }
 
 /**
@@ -37,136 +72,40 @@ function getPrevJSON( $url ) {
 function diffUpdateArmor( $new_data, $prev_data ) {
 
 	foreach ($new_data as $rob_id => $rob_obj) {
-		// アップデートが無かったらスルー
-		if ( $rob_obj->updateinfo !== "update" ) continue;
-		
-		$rob_name= $rob_obj->cardname;
-		foreach ($rob_obj as $param => $new_value) {
-			
-			$prev_value = $prev_data->$rob_id->$param;
-			if ( $new_value != $prev_value ) {
-
-				switch ( $param ) {
-					
-					// head min
-					case 'headminarmor':
-						$update->$rob_name->head->armor->min->prev = $prev_value;
-						$update->$rob_name->head->armor->min->new = $new_value;
-						break;
-					case 'headminheat':
-						$update->$rob_name->head->heat->min->prev = $prev_value;
-						$update->$rob_name->head->heat->min->new = $new_value;
-						break;
-					case 'headminweight':
-						$update->$rob_name->head->weight->min->prev = $prev_value;
-						$update->$rob_name->head->weight->min->new = $new_value;
-						break;
-
-					// body min
-					case 'bodyminarmor':
-						$update->$rob_name->body->armor->min->prev = $prev_value;
-						$update->$rob_name->body->armor->min->new = $new_value;
-						break;
-					case 'bodyminheat':
-						$update->$rob_name->body->heat->min->prev = $prev_value;
-						$update->$rob_name->body->heat->min->new = $new_value;
-						break;
-					case 'bodyminweight':
-						$update->$rob_name->body->weight->min->prev = $prev_value;
-						$update->$rob_name->body->weight->min->new = $new_value;
-						break;
-
-					// arm min
-					case 'armminarmor':
-						$update->$rob_name->arm->armor->min->prev = $prev_value;
-						$update->$rob_name->arm->armor->min->new = $new_value;
-						break;
-					case 'armminheat':
-						$update->$rob_name->arm->heat->min->prev = $prev_value;
-						$update->$rob_name->arm->heat->min->new = $new_value;
-						break;
-					case 'armminweight':
-						$update->$rob_name->arm->weight->min->prev = $prev_value;
-						$update->$rob_name->arm->weight->min->new = $new_value;
-						break;
-
-					// leg min
-					case 'legminarmor':
-						$update->$rob_name->leg->armor->min->prev = $prev_value;
-						$update->$rob_name->leg->armor->min->new = $new_value;
-						break;
-					case 'legminheat':
-						$update->$rob_name->leg->heat->min->prev = $prev_value;
-						$update->$rob_name->leg->heat->min->new = $new_value;
-						break;
-					case 'legminweight':
-						$update->$rob_name->leg->weight->min->prev = $prev_value;
-						$update->$rob_name->leg->weight->min->new = $new_value;
-						break;
-					
-					// head max
-					case 'headmaxarmor':
-						$update->$rob_name->head->armor->max->prev = $prev_value;
-						$update->$rob_name->head->armor->max->new = $new_value;
-						break;
-					case 'headmaxheat':
-						$update->$rob_name->head->heat->max->prev = $prev_value;
-						$update->$rob_name->head->heat->max->new = $new_value;
-						break;
-					case 'headmaxweight':
-						$update->$rob_name->head->weight->max->prev = $prev_value;
-						$update->$rob_name->head->weight->max->new = $new_value;
-						break;
-
-					// body max
-					case 'bodymaxarmor':
-						$update->$rob_name->body->armor->max->prev = $prev_value;
-						$update->$rob_name->body->armor->max->new = $new_value;
-						break;
-					case 'bodymaxheat':
-						$update->$rob_name->body->heat->max->prev = $prev_value;
-						$update->$rob_name->body->heat->max->new = $new_value;
-						break;
-					case 'bodymaxweight':
-						$update->$rob_name->body->weight->max->prev = $prev_value;
-						$update->$rob_name->body->weight->max->new = $new_value;
-						break;
-
-					// arm max
-					case 'armmaxarmor':
-						$update->$rob_name->arm->armor->max->prev = $prev_value;
-						$update->$rob_name->arm->armor->max->new = $new_value;
-						break;
-					case 'armmaxheat':
-						$update->$rob_name->arm->heat->max->prev = $prev_value;
-						$update->$rob_name->arm->heat->max->new = $new_value;
-						break;
-					case 'armmaxweight':
-						$update->$rob_name->arm->weight->max->prev = $prev_value;
-						$update->$rob_name->arm->weight->max->new = $new_value;
-						break;
-
-					// leg max
-					case 'legmaxarmor':
-						$update->$rob_name->leg->armor->max->prev = $prev_value;
-						$update->$rob_name->leg->armor->max->new = $new_value;
-						break;
-					case 'legmaxheat':
-						$update->$rob_name->leg->heat->max->prev = $prev_value;
-						$update->$rob_name->leg->heat->max->new = $new_value;
-						break;
-					case 'legmaxweight':
-						$update->$rob_name->leg->weight->max->prev = $prev_value;
-						$update->$rob_name->leg->weight->max->new = $new_value;
-						break;
-
-				}
+		if ( $rob_obj->update === 'n' ) continue; // アップデートが無かったらスルー
+		$rob_name = $rob_obj->name;
+		foreach ($rob_obj as $parts_id => $parts_obj) {
+			if ( $parts_id === 'update' || $parts_id === 'name' ) continue;
+			foreach ($parts_obj as $param => $value) {
+				$prev_value = $prev_data->$rob_id->$parts_id->$param;
+				if ($value->min !== $prev_value->min ||
+					$value->max !== $prev_value->max) {
+					$update->$rob_id->$parts_id->$param->max->new  = $value->max;
+					$update->$rob_id->$parts_id->$param->max->prev = $prev_value->max;
+					$update->$rob_id->$parts_id->$param->min->new  = $value->min;
+					$update->$rob_id->$parts_id->$param->min->prev = $prev_value->min;			
+				}	
 			}
 		}
+		isset($update->$rob_id) && $update->$rob_id->name = $rob_name;
 	}
 
 	return $update;
 }
+
+/**
+ * JSON ファイルを更新する
+ * @param  [string] $file  [armorかweapon]
+ * @param  [obj]    $parts [パーツオブジェクト]
+ */
+function update_prev_json( $file, $parts ) {
+	$url = array(
+		'armor'  => 'prevdata/prev_armor_data.json',
+		'weapon' => 'prevdata/prev_weapon_data.json',
+	);
+	file_put_contents( $url[$file], json_encode( $parts ) );
+}
+
 
 /**
  * 武器のアップデートの差分を返す
@@ -377,6 +316,27 @@ function diffUpdateWeapon( $new_data, $prev_data ) {
 	return $update;
 
 }
+
+/**
+ * パーツDBからJSONを抽出する
+ * 抽出に成功したらJSONを返す
+ * 
+ * @param  [string] $url       [データベースのURL]
+ * @param  [string] $star_word [description]
+ * @param  [string] $end_word  [description]
+ * @return [string]            [description]
+ */
+function getNewJSON( $url, $start_word= 'InitCardData', $end_word= '}}' ) {
+	$html= file_get_contents( $url );	
+	$start= strpos( $html, $start_word );
+	$end= strpos( $html, $end_word, $start);
+	$length = $end + strlen($end_word) - $start;
+	$json = substr( $html, $start, $length );
+	$json = strstr( $json, '{');
+
+	return $json;
+}
+
 
 /**
  * 装甲のアップデートをつぶやく
