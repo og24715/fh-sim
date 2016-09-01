@@ -7,9 +7,9 @@ FH asm sim
 
 ## Description
 
-main.php?json_update=y でjsonを更新する
-main.php?r=armor で装甲のjson、
-main.php?r=weapon で武器のjson、が帰ってくるかもしれない
+main.php?json_update=y でjsonを更新する  
+main.php?r=armor で装甲のjson、  
+main.php?r=weapon で武器のjson、が帰ってくるかもしれない  
 
 ## VS. 
 
