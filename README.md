@@ -3,7 +3,7 @@ FH asm sim
 
 ## Demo
 
-[demo](https://github.com/og24715/fh-sim/blob/images/demo.gif?raw=true)
+![demo](https://github.com/og24715/fh-sim/blob/images/demo.gif?raw=true)
 
 ## Description
 
