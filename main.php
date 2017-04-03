@@ -4,8 +4,9 @@ require 'function.php';
 $armor = new Armor;
 $weapon = new Weapon;
 
-print_r($armor->scraiping_db());
+echo "hoge";
 
+// print_r($armor->scraiping_db());
 
 // $json_update = (string)filter_input(INPUT_GET, 'json_update');
 // $request = (string)filter_input(INPUT_GET, 'r');
