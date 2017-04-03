@@ -44,7 +44,7 @@ class Armor {
 	 * @param  [string] $url パーツDBのURL
 	 * @return [obj] 装甲のパラメータのオブジェクトを返す
 	 */
-	private function scraping_db() {
+	public function scraping_db() {
 
 		$url = 'http://figureheads.jp/database/index.php';
 		$dom = new DOMDocument;
@@ -52,9 +52,9 @@ class Armor {
 		$xpath = new DOMXPath( $dom );
 
 		$xpath_query = '//*[@id="cardlist"]/li';
-		$node= $xpath->query($xpath_query);
+		$cardlist = $xpath->query($xpath_query);
 
-		foreach ($node as $li) {
+		foreach ($cardlist as $li) {
 			
 			$rob_id = $xpath->evaluate('string(./a/@data-card-id)', $li);
 
