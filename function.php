@@ -84,6 +84,8 @@ class Armor {
 		}
 
 		return $params;
+
+		print_r($param);
 	}
 
 	/**
